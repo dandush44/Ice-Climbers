@@ -6,7 +6,7 @@
 | **Team** | Rom Meir, Daniel Freund |
 | **Genre** | Educational / Arcade / Endless Typing-Based Climber |
 | **Target platform** | PC (Windows) + Android |
-| **Engine / Unity version** | Unity 6 (6000.3.21f1), 2D |
+| **Engine / Unity version** | Unity 6 (6000.3.20f1), 2D |
 | **Orientation & reference resolution** | Landscape, 960 × 540 reference |
 | **Expected session length** | 30 seconds – 5 minutes |
 | **Document version** | v0.1 — 2026-09-16 |
