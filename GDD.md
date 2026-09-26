@@ -7,7 +7,7 @@
 | **Genre** | Educational / Arcade / Endless Typing-Based Climber |
 | **Target platform** | PC (Windows) + Android |
 | **Engine / Unity version** | Unity 6 (6000.3.20f1), 2D |
-| **Orientation & reference resolution** | Landscape, 960 × 540 reference |
+| **Orientation & reference resolution** | Landscape (PC), Portrait (Android) |
 | **Expected session length** | 30 seconds – 5 minutes |
 | **Document version** | v0.1 — 2026-09-16 |
 
@@ -61,8 +61,8 @@ stateDiagram-v2
 8. Difficulty increases as the player climbs higher.
 9. An incorrect word or failed jump causes the player to fall.
 10. Falling below the playable area ends the run.
-- **Scoring:** +1 point is awarded for every successfully reached platform. The high score is stored locally.
-- **Failure:** An incorrect confirmed word, failed jump, or fall below the playable area ends the run. The Game Over screen then allows the player to retry or return to the Main Menu.
+- **Scoring:** +150 points are awarded for every successfully reached platform. The high score is stored locally. The number of platforms climbed is also shown per session.
+- **Failure:** An incorrect confirmed word or moving outside the playable area ends the run. The Game Over screen then allows the player to retry or return to the Main Menu.
 
 ### Parameters you will need to tune
 
@@ -70,11 +70,8 @@ stateDiagram-v2
 |---|---|---|
 | `platformSpacing` | Vertical distance between platforms | To be tuned |
 | `platformSpeed` | Rate at which new platforms appear/move | To be tuned |
-| `wordLength` | Length of words presented | To be tuned |
 | `difficultyRamp` | Rate of difficulty increase | To be tuned |
-| `wordDisplayTime` | Time available to type a word | To be tuned |
-| `playerJumpDuration` | Duration of a climb/jump | To be tuned |
-| `maxPlatformDistance` | Maximum reachable platform distance | To be tuned |
+| `playerJumpSpeed` | Speed of a climb/jump | To be tuned |
 
 **Where these live:** Parameters should be exposed through the game's configuration data so they can be adjusted without rewriting gameplay code.
 
@@ -87,9 +84,9 @@ stateDiagram-v2
 | Action | Keyboard / Mouse | Gamepad | Touch |
 |---|---|---|---|
 | Type Word | Keyboard letters | Not supported | Android on-screen keyboard |
-| Confirm / Climb | Enter | Not supported | Confirm / Enter button |
-| Retry | Enter / R | Not supported | Retry button |
-| Pause | Escape | Not supported | Pause button |
+| Confirm / Climb | Enter | Not supported | Not supported / Enter button |
+| Retry | Not supported | Not supported | Retry button |
+| Pause | Not supported | Not supported | Pause button |
 | Menu Selection | Mouse / Enter | Not supported | Touch |
 
 ### Input Edge Cases
@@ -99,7 +96,7 @@ stateDiagram-v2
 - Menu input should not accidentally enter characters into the gameplay word field.
 - A short input lock can be used during transitions between platforms.
 - Invalid or extra characters should not trigger a successful climb.
-- On Android, the game uses the on-screen keyboard and touch UI. Typing difficulty can be slightly more lenient than on PC to account for mobile input.
+- On Android, the game uses the on-screen keyboard and touch UI.
 
 ---
 
@@ -110,7 +107,6 @@ stateDiagram-v2
 - Game title: **ICE CLIMBERS**
 - Play button
 - High Score
-- Optional sound/settings controls
 - Exit button
 
 ### Gameplay HUD
@@ -131,7 +127,6 @@ stateDiagram-v2
 
 - Final score
 - High score
-- Highest platform reached
 - Retry
 - Main Menu
 
@@ -148,7 +143,6 @@ Use a Canvas configured for the target landscape resolution. A **Canvas Scaler**
 | Ice climber character | Idle, jump, fall | Original or appropriately licensed asset | Player character |
 | Ice platforms | Multiple visual variants | Original or appropriately licensed asset | Main climbing platforms |
 | Mountain background | One or more layers | Original or appropriately licensed asset | Frozen environment |
-| Snow particles | Particle effect | Unity / original / appropriately licensed | Environmental polish |
 | UI elements | Buttons, panels, icons | Original or appropriately licensed | Menus and HUD |
 | Correct typing effect | Visual effect | Original / Unity | Positive typing feedback |
 | Incorrect typing effect | Visual effect | Original / Unity | Error feedback |
@@ -156,11 +150,7 @@ Use a Canvas configured for the target landscape resolution. A **Canvas Scaler**
 | Fall SFX | One clip | Appropriately licensed | Failure feedback |
 | Background music | Looping track | Appropriately licensed | Menu/gameplay atmosphere |
 
-**Licence note:** All final assets used in the submitted project will either be original or sourced from assets whose licences allow their use in the project. Asset sources and licences will be documented before final submission.
-
-**Technical art rules:** 2D sprites will use consistent Pixels Per Unit settings and appropriate filtering. Sorting layers from back to front will be:
-
-`Background → Environment → Ice Platforms → Player → Effects → UI`
+**Technical art rules:** 2D sprites will use consistent Pixels Per Unit settings and appropriate filtering.
 
 Words and typing feedback must remain clearly readable regardless of the background.
 
@@ -180,7 +170,6 @@ Words and typing feedback must remain clearly readable regardless of the backgro
 - Unity UI
 - Keyboard/Input System
 - Coroutines for timed gameplay operations
-- Object Pooling where appropriate
 
 **Target device:** Windows PC with keyboard and Android smartphone.
 
@@ -188,16 +177,13 @@ Words and typing feedback must remain clearly readable regardless of the backgro
 
 ```mermaid
 flowchart TD
-    GameManager --> PlayerController
-    GameManager --> WordManager
-    GameManager --> PlatformSpawner
-    GameManager --> UIManager
-    GameManager --> AudioManager
-    WordManager --> PlayerController
-    PlatformSpawner --> WordManager
-    GameConfig --> PlayerController
-    GameConfig --> WordManager
-    GameConfig --> PlatformSpawner
+    GameManager --> CameraScroll
+    CameraScroll --> PlayerController
+    PlayerController --> GameManager
+    ParallaxEffect
+    FollowPlayer
+    SpriteText
+    MenuManager
 ```
 
 ### Script Responsibilities
@@ -206,23 +192,13 @@ flowchart TD
 |---|---|
 | `GameManager` | Controls overall game state and run lifecycle |
 | `PlayerController` | Handles player movement, climbing, falling, and player state |
-| `WordManager` | Selects target words and validates typed input |
-| `PlatformSpawner` | Creates/recycles upcoming ice platforms |
-| `Platform` | Stores platform-specific data and interaction state |
-| `ScoreManager` | Tracks current score and high score |
-| `UIManager` | Controls menus, HUD, pause, and Game Over UI |
-| `AudioManager` | Controls music and sound effects |
-| `GameConfig` | Stores tunable gameplay parameters |
+| `MenuManager` | Controls main menu actions |
+| `CameraScroll` | Continously moves a target object for the camera to follow |
+| `FollowPlayer` | Sets the camera according to the player position |
+| `ParallaxEffect` | Parallax scrolling effect |
+| `SpriteText` | Allows displaying text correctly on platforms |
 
 ### Course / Technical Features
-
-#### Object Pooling
-
-Used for repeatedly created/recycled platforms and other recurring gameplay objects to reduce unnecessary runtime allocations.
-
-#### Singleton / GameManager
-
-A central GameManager can coordinate game state and communication between major gameplay systems.
 
 #### Coroutines
 
