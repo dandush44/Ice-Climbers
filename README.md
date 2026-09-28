@@ -29,6 +29,13 @@ The build settings contain two scenes:
 - `Assets/Scenes/Menu.unity`
 - `Assets/Scenes/Game.unity`
 
+## Android
+
+A ready-to-install Android APK is available in the
+[Releases](../../releases) section of this repository.
+
+Download `IceClimbersV1.0_APK.apk`, copy it to an Android device, and install it.
+
 ## Controls
 
 | Action | Windows | Android |
